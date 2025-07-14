@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembayaran Berhasil - Amat Hosting</title>
+    <title>Pembayaran & Detail Server - Amat Hosting</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -21,14 +21,44 @@
     </header>
 
     <main class="container">
-        <section class="success-section">
-            <div class="success-card">
-                <i class="fa-solid fa-circle-check success-icon"></i>
-                <h2>Pembayaran Berhasil!</h2>
-                <p>Terima kasih telah melakukan pemesanan di Amat Hosting. Server Anda sedang diproses dan detailnya akan segera ditampilkan di bawah.</p>
-                <div id="loadingMessage" class="loading-message">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat detail server...
+        <section class="payment-instruction-section">
+            <div class="payment-card">
+                <i class="fa-solid fa-receipt payment-icon"></i>
+                <h2>Pembayaran Pesanan Anda</h2>
+                <p>Silakan selesaikan pembayaran Anda menggunakan instruksi di bawah ini.</p>
+                
+                <div id="paymentInstructions" class="payment-instructions-container">
+                    <h3>Pembayaran QRIS</h3>
+                    <p>Silakan scan QR Code di bawah ini menggunakan aplikasi e-wallet atau mobile banking Anda.</p>
+                    <div class="qris-code-container">
+                        <img id="qrisImage" src="" alt="QRIS Code" style="width: 250px; height: 250px; border: 1px solid var(--border-color); border-radius: 8px; display: none;">
+                        <div id="qrisLoading" class="loading-message">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Memuat QRIS...
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span>Total Pembayaran:</span>
+                        <p id="qrisNominal">Rp 0</p>
+                        <button class="copy-btn" data-target="qrisNominal"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>ID Transaksi:</span>
+                        <p id="qrisDepositId"></p>
+                        <button class="copy-btn" data-target="qrisDepositId"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <p class="small-text">QRIS akan otomatis kadaluarsa dalam <span id="countdown">10:00</span> menit. Jika sudah membayar, detail server akan muncul otomatis.</p>
+                    <button id="cancelDepositBtn" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> Batalkan Deposit</button>
                 </div>
+
+                <div id="serverStatusMessage" class="loading-message" style="display: none;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Menunggu pembayaran terkonfirmasi dan server dibuat...
+                </div>
+                <div id="paymentErrorMessage" class="error-message" style="display: none;">
+                    <i class="fa-solid fa-circle-exclamation error-icon"></i>
+                    <p>Terjadi kesalahan saat memuat instruksi pembayaran atau deposit gagal dibuat. Order ID: <span id="errorOrderIdPayment"></span></p>
+                    <button class="btn btn-primary" onclick="location.reload()"><i class="fa-solid fa-sync-alt"></i> Coba Lagi</button>
+                </div>
+
                 <div id="serverDetails" class="server-details" style="display: none;">
                     <h3>Detail Server Anda:</h3>
                     <div class="detail-item">
@@ -67,11 +97,6 @@
                         <button id="btnStopServer" class="btn btn-danger"><i class="fa-solid fa-stop"></i> Stop Server</button>
                     </div>
                 </div>
-                <div id="errorMessage" class="error-message" style="display: none;">
-                    <i class="fa-solid fa-circle-exclamation error-icon"></i>
-                    <p>Maaf, terjadi kesalahan saat memuat detail server atau server belum siap. Mohon tunggu beberapa saat atau hubungi dukungan kami dengan Order ID: <span id="errorOrderId"></span></p>
-                    <button class="btn btn-primary" onclick="location.reload()"><i class="fa-solid fa-sync-alt"></i> Coba Lagi</button>
-                </div>
             </div>
         </section>
     </main>
@@ -94,7 +119,7 @@
             <div class="footer-col">
                 <h4>Perusahaan</h4>
                 <ul>
-                    <li><li><a href="#">Tentang Kami</a></li>
+                    <li><a href="#">Tentang Kami</a></li>
                     <li><a href="#">Kontak</a></li>
                     <li><a href="#">Blog</a></li>
                 </ul>

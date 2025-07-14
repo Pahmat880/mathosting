@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script type="text/javascript"
-        src="https://app.midtrans.com/snap/snap.js"
-        data-client-key="SB-Mid-client-SijkopAVCnu3KaCU"></script>
 </head>
 <body>
     <header>
@@ -41,47 +38,34 @@
                         
                         <h3>Durasi Sewa</h3>
                         <div class="form-group">
-                            <label for="duration">Pilih Durasi Sewa</label>
-                            <select id="duration" name="duration" required>
-                                <option value="1">1 Bulan</option>
-                                <option value="3">3 Bulan (-5% Diskon)</option>
-                                <option value="6">6 Bulan (-10% Diskon)</option>
-                                <option value="12">12 Bulan (-15% Diskon)</option>
-                            </select>
+                            <label>Durasi Sewa:</label>
+                            <p><strong>1 Bulan</strong></p>
+                            <input type="hidden" id="duration" name="duration" value="1">
+                        </div>
+
+                        <h3>Kode Promo</h3>
+                        <div class="form-group promo-code-group">
+                            <input type="text" id="promoCode" name="promoCode" placeholder="Masukkan kode promo (opsional)">
+                            <button type="button" id="applyPromoBtn" class="btn btn-secondary">Gunakan Promo</button>
+                            <p id="promoStatusMessage" class="promo-status"></p>
                         </div>
 
                         <h3>Metode Pembayaran</h3>
                         <div class="payment-methods">
                             <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="gopay" required>
-                                <img src="https://midtrans.com/assets/img/logo/gopay.png" alt="GoPay" style="height: 25px;">
-                                <span>GoPay</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="qris">
+                                <input type="radio" name="paymentMethod" value="QRISFAST" checked required>
                                 <i class="fa-solid fa-qrcode"></i>
-                                <span>QRIS (All E-wallet)</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="bca_va">
-                                <img src="https://midtrans.com/assets/img/logo/bca.png" alt="BCA" style="height: 25px;">
-                                <span>BCA Virtual Account</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="bni_va">
-                                <img src="https://midtrans.com/assets/img/logo/bni.png" alt="BNI" style="height: 25px;">
-                                <span>BNI Virtual Account</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="paymentMethod" value="bri_va">
-                                <img src="https://midtrans.com/assets/img/logo/bri.png" alt="BRI" style="height: 25px;">
-                                <span>BRI Virtual Account</span>
+                                <span>QRIS (Scan All E-wallet/Bank)</span>
                             </label>
                         </div>
                         
                         <input type="hidden" id="packageId" name="packageId">
                         <input type="hidden" id="packageName" name="packageName">
                         <input type="hidden" id="packagePrice" name="packagePrice">
+                        <input type="hidden" id="appliedDiscountAmount" name="appliedDiscountAmount" value="0">
+                        <input type="hidden" id="appliedPromoCode" name="appliedPromoCode" value="">
+                        <input type="hidden" id="taxPercentage" name="taxPercentage" value="0">
+
 
                         <button type="submit" class="btn btn-primary btn-full-width">Lanjutkan Pembayaran</button>
                     </form>
@@ -95,18 +79,18 @@
                     </div>
                     <div class="summary-item">
                         <span>Durasi Sewa:</span>
-                        <span id="summaryDuration"></span>
+                        <span id="summaryDuration">1 Bulan</span>
                     </div>
                     <div class="summary-item">
                         <span>Harga Paket:</span>
                         <span id="summaryBasePrice">Rp 0</span>
                     </div>
                     <div class="summary-item">
-                        <span>Diskon:</span>
+                        <span>Diskon (Promo):</span>
                         <span id="summaryDiscount">Rp 0</span>
                     </div>
                     <div class="summary-item">
-                        <span>Pajak (0%):</span>
+                        <span>Pajak:</span>
                         <span id="summaryTax">Rp 0</span>
                     </div>
                     <div class="summary-total">
@@ -136,7 +120,7 @@
             <div class="footer-col">
                 <h4>Perusahaan</h4>
                 <ul>
-                    <li><li><a href="#">Tentang Kami</a></li>
+                    <li><a href="#">Tentang Kami</a></li>
                     <li><a href="#">Kontak</a></li>
                     <li><a href="#">Blog</a></li>
                 </ul>

@@ -454,6 +454,38 @@ footer {
     box-shadow: 0 0 0 2px rgba(116, 192, 252, 0.3); /* Accent color glow */
 }
 
+/* Promo Code Group Styling */
+.promo-code-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.promo-code-group input {
+    flex-grow: 1;
+}
+
+.promo-code-group .btn-secondary {
+    padding: 12px 15px; /* Adjust padding to match other inputs */
+    font-size: 1em;
+}
+
+.promo-status {
+    font-size: 0.9em;
+    margin-top: 5px;
+    padding-left: 5px; /* Align with input */
+    color: var(--light-text-color);
+}
+
+.promo-status.success {
+    color: #4CAF50; /* Green for success */
+}
+
+.promo-status.error {
+    color: #dc3545; /* Red for error */
+}
+
+
 /* Payment Methods */
 .payment-methods {
     display: flex;
@@ -530,13 +562,13 @@ footer {
     color: var(--text-color);
 }
 
-/* --- Halaman Sukses & Detail Server --- */
-.success-section {
+/* --- Payment Instruction Section --- */
+.payment-instruction-section {
     padding: 60px 0;
     text-align: center;
 }
 
-.success-card {
+.payment-card {
     background-color: var(--secondary-bg);
     border-radius: 8px;
     padding: 40px;
@@ -545,152 +577,74 @@ footer {
     margin: 0 auto;
 }
 
-.success-icon {
+.payment-icon {
     font-size: 5em;
-    color: #4CAF50; /* Green check */
+    color: var(--accent-color); /* Blue for payment icon */
     margin-bottom: 20px;
 }
 
-.success-card h2 {
+.payment-card h2 {
     font-size: 2.5em;
     color: var(--text-color);
     margin-bottom: 15px;
 }
 
-.success-card p {
+.payment-card p {
     font-size: 1.1em;
     color: var(--light-text-color);
     margin-bottom: 30px;
 }
 
-.loading-message {
-    font-size: 1.2em;
-    color: var(--accent-color);
-    margin-top: 20px;
-}
-
-.loading-message .fa-spin {
-    margin-right: 10px;
-}
-
-.error-message {
-    background-color: #331f2c; /* Dark red background for error */
-    border: 1px solid #dc3545; /* Red border */
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 30px;
-}
-
-.error-icon {
-    font-size: 3em;
-    color: #dc3545; /* Red icon */
-    margin-bottom: 15px;
-}
-
-.error-message p {
-    color: #f8d7da; /* Light red text */
-    font-size: 1em;
-    margin-bottom: 20px;
-}
-
-.error-message .btn {
-    background-color: #dc3545;
-}
-
-.error-message .btn:hover {
-    background-color: #c82333;
-}
-
-
-/* Server Details Display */
-.server-details {
-    text-align: left;
+.payment-instructions-container {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
 }
 
-.server-details h3 {
-    text-align: center;
+.payment-instructions-container h3 {
     font-size: 1.8em;
     color: var(--accent-color);
     margin-bottom: 25px;
 }
 
-.detail-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    background-color: var(--primary-bg);
-    padding: 12px 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-}
-
-.detail-item span {
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 120px; /* Lebar label agar rapi */
-    margin-right: 15px;
-}
-
-.detail-item p {
-    flex-grow: 1;
-    margin: 0;
-    color: var(--light-text-color);
-    font-family: 'Consolas', 'Monospace'; /* Font monospace untuk data teknis */
-    font-size: 0.95em;
-    word-break: break-all; /* Agar teks panjang tidak keluar batas */
-}
-
-.copy-btn {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 10px;
-    transition: background-color 0.3s ease;
-}
-
-.copy-btn:hover {
-    background-color: var(--button-hover-bg);
-}
-
-.copy-btn i {
-    margin-right: 5px;
-}
-
-.server-actions {
-    margin-top: 30px;
+.qris-code-container {
+    margin: 20px auto;
+    width: fit-content;
     display: flex;
     justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap; /* Untuk responsif */
+    align-items: center;
+    min-height: 250px; /* Agar tidak collapse saat loading */
 }
 
-.server-actions .btn {
-    padding: 10px 20px;
-    font-size: 1em;
+.qris-code-container img {
+    max-width: 100%;
+    height: auto;
 }
 
-.btn-secondary {
-    background-color: #6c757d; /* Grey color for secondary actions */
-    color: white;
+.small-text {
+    font-size: 0.9em;
+    color: var(--light-text-color);
+    margin-top: 20px;
+}
+.small-text span {
+    font-weight: bold;
+    color: var(--text-color);
 }
 
-.btn-secondary:hover {
-    background-color: #5a6268;
+/* Hide payment section when server details are shown */
+.payment-instructions-container.hidden, .payment-icon.hidden,
+.payment-card h2.hidden, .payment-card p.hidden {
+    display: none !important;
 }
 
-.btn-danger {
-    background-color: #dc3545; /* Red color for destructive actions */
-    color: white;
-}
+/* Re-using server-details and loading-message for consistency */
 
-.btn-danger:hover {
-    background-color: #c82333;
+/* Ensure the server-details section also has a card-like background if it's shown in place of payment */
+.server-details {
+    background-color: var(--secondary-bg); /* Match payment-card background */
+    border-radius: 8px; /* Match payment-card border-radius */
+    padding: 20px; /* Adjust padding as needed */
+    box-shadow: none; /* Remove extra shadow if it's inside payment-card */
 }
 
 
