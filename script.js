@@ -1,7 +1,7 @@
 // public/script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Custom Pop-up Functionality ---
+    // --- Custom Pop-up Functionality (TETAP SAMA) ---
     const customPopup = document.getElementById('customPopup');
     const popupIcon = document.getElementById('popupIcon');
     const popupTitle = document.getElementById('popupTitle');
@@ -89,16 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Logic for checkout.html (form handling and price calculation) ---
+    // --- Logic for checkout.html (TETAP SAMA, kecuali pembaruan harga & pajak) ---
     const checkoutForm = document.getElementById('checkoutForm');
     const summaryPackageName = document.getElementById('summaryPackageName');
-    const summaryDuration = document.getElementById('summaryDuration'); // Akan selalu "1 Bulan"
+    const summaryDuration = document.getElementById('summaryDuration'); 
     const summaryBasePrice = document.getElementById('summaryBasePrice');
     const summaryDiscount = document.getElementById('summaryDiscount'); 
     const summaryTax = document.getElementById('summaryTax');
     const summaryTotalPrice = document.getElementById('summaryTotalPrice');
     
-    // Promo Code elements
     const promoCodeInput = document.getElementById('promoCode');
     const applyPromoBtn = document.getElementById('applyPromoBtn');
     const promoStatusMessage = document.getElementById('promoStatusMessage');
@@ -131,21 +130,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('packagePrice').value = selectedPackageData.price;
 
         summaryPackageName.textContent = selectedPackageData.name;
-        summaryDuration.textContent = '1 Bulan'; // Selalu 1 bulan
+        summaryDuration.textContent = '1 Bulan'; 
 
         const updatePriceSummary = () => {
-            const basePrice = selectedPackageData.price; // Harga paket untuk 1 bulan
+            const basePrice = selectedPackageData.price; 
             
-            // Hitung harga setelah diskon promo (jika ada)
             let priceAfterPromo = basePrice - currentAppliedDiscount;
-            if (priceAfterPromo < 0) priceAfterPromo = 0; // Pastikan harga tidak negatif
+            if (priceAfterPromo < 0) priceAfterPromo = 0; 
 
-            // Generate random tax percentage (1-3%) only if not already set or promo applied
-            // To keep tax consistent after promo application, only generate once at load
             if (currentTaxPercentage === 0) { 
-                 currentTaxPercentage = Math.floor(Math.random() * 3) + 1; // Random number between 1 and 3
+                 currentTaxPercentage = Math.floor(Math.random() * 3) + 1; 
             }
-            taxPercentageHidden.value = currentTaxPercentage; // Update hidden input
+            taxPercentageHidden.value = currentTaxPercentage; 
 
             const taxAmount = priceAfterPromo * (currentTaxPercentage / 100);
             
@@ -157,9 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
             summaryTotalPrice.textContent = `Rp ${finalTotalPrice.toLocaleString('id-ID')}`;
         };
 
-        updatePriceSummary(); // Panggil pertama kali
+        updatePriceSummary(); 
 
-        // Logic untuk Kode Promo
         applyPromoBtn.addEventListener('click', async () => {
             const promoCode = promoCodeInput.value.trim();
             if (!promoCode) {
@@ -184,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     promoStatusMessage.textContent = `Kode promo berhasil diterapkan! Diskon: Rp ${result.discountValue.toLocaleString('id-ID')}`;
                     promoStatusMessage.className = 'promo-status success';
-                    updatePriceSummary(); // Perbarui harga setelah diskon
+                    updatePriceSummary(); 
                 } else {
                     currentAppliedDiscount = 0;
                     activePromoCode = '';
@@ -192,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     appliedPromoCodeHidden.value = '';
                     promoStatusMessage.textContent = result.message || 'Kode promo tidak valid atau kadaluarsa.';
                     promoStatusMessage.className = 'promo-status error';
-                    updatePriceSummary(); // Perbarui harga (menghilangkan diskon jika tidak valid)
+                    updatePriceSummary(); 
                 }
             } catch (error) {
                 console.error('Error validating promo code:', error);
@@ -213,12 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(checkoutForm);
             const data = Object.fromEntries(formData.entries());
             
-            // Pastikan data yang dikirim adalah nilai numerik yang benar
             data.totalPrice = parseFloat(summaryTotalPrice.textContent.replace(/[^0-9,-]+/g, "").replace(",", "."));
-            data.basePrice = parseFloat(summaryBasePrice.textContent.replace(/[^0-9,-]+/g, "").replace(",", ".")); // Harga paket asli (sebelum diskon promo, tapi setelah diskon durasi jika ada)
-            data.appliedDiscountAmount = parseFloat(appliedDiscountAmountHidden.value); // Diskon yang diterapkan di frontend
-            data.appliedPromoCode = appliedPromoCodeHidden.value; // Kirim promo code yang sudah divalidasi frontend
-            data.taxPercentage = parseFloat(taxPercentageHidden.value); // Pajak yang dihitung di frontend
+            data.basePrice = parseFloat(summaryBasePrice.textContent.replace(/[^0-9,-]+/g, "").replace(",", "."));
+            data.appliedDiscountAmount = parseFloat(appliedDiscountAmountHidden.value); 
+            data.appliedPromoCode = appliedPromoCodeHidden.value; 
+            data.taxPercentage = parseFloat(taxPercentageHidden.value); 
 
             try {
                 const response = await fetch('/api/create-deposit', {
@@ -293,12 +287,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     qrisNominal.textContent = `Rp ${parseFloat(deposit.nominal).toLocaleString('id-ID')}`;
                     qrisDepositId.textContent = deposit.id;
 
-                    if (deposit.qr_image_url) { 
-                        qrisImage.src = deposit.qr_image_url;
+                    // --- Perbaikan di sini: Menggunakan Base64 ---
+                    if (deposit.qr_image_base64) { 
+                        qrisImage.src = `data:${deposit.qr_image_format || 'image/png'};base64,${deposit.qr_image_base64}`;
                         qrisImage.style.display = 'block';
                         qrisLoading.style.display = 'none';
                     } else {
-                        qrisLoading.textContent = 'QRIS tidak tersedia atau kadaluarsa.';
+                        qrisLoading.textContent = 'QRIS tidak tersedia. Mohon hubungi dukungan.';
                         qrisLoading.style.color = '#dc3545';
                     }
                     
