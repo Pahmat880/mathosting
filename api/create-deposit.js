@@ -4,7 +4,7 @@ const { MongoClient } = require('mongodb');
 const axios = require('axios');
 const crypto = require('crypto');
 
-// --- Konfigurasi Umum & Lingkungan ---
+// --- Konfigurasi Umum & Lingkungan (TETAP SAMA) ---
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.DB_NAME || 'amat_hosting_db';
 
@@ -12,7 +12,7 @@ if (!MONGODB_URI) {
     console.error("MongoDB URI is not set. Please check your environment variables.");
 }
 
-// --- Konfigurasi ForestAPI ---
+// --- Konfigurasi ForestAPI (TETAP SAMA) ---
 const FOREST_API_BASE_URL = 'https://m.forestapi.web.id/api/h2h';
 const FOREST_API_KEY = process.env.FOREST_API_KEY;
 
@@ -20,7 +20,7 @@ if (!FOREST_API_KEY) {
     console.error("FOREST_API_KEY is not set. API calls to ForestAPI might fail.");
 }
 
-// Cache koneksi MongoDB untuk Serverless Functions
+// Cache koneksi MongoDB untuk Serverless Functions (TETAP SAMA)
 let cachedDb = null;
 
 async function connectToDatabase() {
@@ -33,7 +33,7 @@ async function connectToDatabase() {
     return db;
 }
 
-// Data spesifikasi paket (loc diisi dengan nilai 1)
+// Data spesifikasi paket (TETAP SAMA)
 const packageSpecs = {
     'bot-sentinel': { memory: 2048, cpu: 100, disk: 10240, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 35000 },
     'bot-guardian': { memory: 4096, cpu: 200, disk: 20480, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 60000 },
@@ -42,7 +42,7 @@ const packageSpecs = {
     'bot-infinity': { memory: 0, cpu: 0, disk: 51200, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 150000 }
 };
 
-// Fungsi validasi promo code di backend (ulangi logika dari validate-promocode.js)
+// Fungsi validasi promo code di backend (TETAP SAMA)
 async function validatePromoCodeBackend(promoCode, packageId, db) {
     const promoCollection = db.collection('promocodes');
     const now = new Date();
@@ -71,7 +71,6 @@ async function validatePromoCodeBackend(promoCode, packageId, db) {
         discountValue = promo.discountValue;
     }
 
-    // Pastikan diskon tidak melebihi harga dasar paket
     if (discountValue > basePrice) {
         discountValue = basePrice;
     }
@@ -127,7 +126,6 @@ module.exports = async (req, res) => {
         let calculatedDiscountAmount = 0;
         let finalPromoCode = null;
 
-        // --- Re-validasi Promo Code di Backend untuk Keamanan ---
         if (appliedPromoCode) {
             const promoValidationResult = await validatePromoCodeBackend(appliedPromoCode, packageId, db);
             if (promoValidationResult.success) {
@@ -138,7 +136,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // Harga dasar (selalu 1 bulan)
         const basePrice = selectedPackage.price; 
         let priceAfterDiscount = basePrice - calculatedDiscountAmount;
         if (priceAfterDiscount < 0) priceAfterDiscount = 0;
@@ -146,17 +143,14 @@ module.exports = async (req, res) => {
         const calculatedTaxAmount = priceAfterDiscount * (taxPercentage / 100);
         const finalCalculatedPrice = priceAfterDiscount + calculatedTaxAmount;
 
-        // Toleransi 1 Rupiah untuk floating point comparison
         if (Math.abs(finalCalculatedPrice - totalPrice) > 1) {
             console.warn(`Harga tidak cocok. Dari Frontend: ${totalPrice}, Hitung Backend: ${finalCalculatedPrice}. Diskon Promo: ${calculatedDiscountAmount}`);
             return res.status(400).json({ message: 'Harga tidak valid atau manipulasi terdeteksi. Silakan coba lagi.' });
         }
 
-        // Buat orderId dan reffId
         const orderId = `AMAT-${Date.now()}`;
         const reffId = `REF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-        // Panggil ForestAPI untuk membuat deposit
         const depositPayload = {
             nominal: finalCalculatedPrice,
             method: 'QRISFAST',
@@ -170,8 +164,8 @@ module.exports = async (req, res) => {
         const forestApiData = forestApiResponse.data;
         console.log('ForestAPI Deposit Response:', forestApiData);
 
-        if (forestApiData.success && forestApiData.data) {
-            // Jika promo code digunakan, increment usage count
+        // --- Perbaikan di sini: Cek forestApiData.status === 'success' ---
+        if (forestApiData.status === 'success' && forestApiData.data) { 
             if (finalPromoCode) {
                 await promoCollection.updateOne(
                     { code: finalPromoCode },
@@ -195,17 +189,17 @@ module.exports = async (req, res) => {
                 taxPercentage: taxPercentage,
                 totalPrice: finalCalculatedPrice,
                 paymentMethod: 'QRISFAST',
-                status: 'waiting_payment',
+                status: 'waiting_payment', // Status awal di DB kita
                 reffId: reffId,
                 depositId: forestApiData.data.id,
-                depositDetails: { 
+                depositDetails: { // Simpan detail dari respons ForestAPI
                     id: forestApiData.data.id,
                     reff_id: forestApiData.data.reff_id,
                     nominal: forestApiData.data.nominal,
                     method: forestApiData.data.method,
                     qr_image_url: forestApiData.data.qr_image_url,
                     qr_image_string: forestApiData.data.qr_image_string,
-                    status: forestApiData.data.status,
+                    status: forestApiData.data.status, // Status dari ForestAPI (e.g., 'pending')
                     created_at: forestApiData.data.created_at,
                     expired_at: forestApiData.data.expired_at,
                     fee: forestApiData.data.fee,
@@ -219,24 +213,32 @@ module.exports = async (req, res) => {
             console.log(`Order ${orderId} saved to MongoDB. Status: waiting_payment. Deposit ID: ${forestApiData.data.id}`);
 
             res.status(200).json({
-                success: true,
-                message: 'Deposit berhasil dibuat, silakan lanjutkan pembayaran.',
+                success: true, // Ubah respons ini menjadi true
+                message: forestApiData.message || 'Deposit berhasil dibuat, silakan lanjutkan pembayaran.', // Ambil pesan dari ForestAPI
                 orderId: orderId,
                 depositId: forestApiData.data.id,
                 qr_image_url: forestApiData.data.qr_image_url,
                 nominal: forestApiData.data.nominal,
-                deposit_status: forestApiData.data.status,
+                deposit_status: forestApiData.data.status, // Status dari ForestAPI
                 created_at: forestApiData.data.created_at,
                 expired_at: forestApiData.data.expired_at
             });
 
         } else {
             console.error('ForestAPI reported deposit creation failure:', forestApiData.message || 'Unknown error from ForestAPI');
+            // Jika status bukan 'success' atau data tidak ada, anggap gagal
             res.status(500).json({ success: false, message: forestApiData.message || 'Gagal membuat deposit pembayaran.' });
         }
 
     } catch (error) {
         console.error('Error in create-deposit API:', error.response ? error.response.data : error.message);
-        res.status(500).json({ success: false, message: 'Terjadi kesalahan koneksi atau internal saat membuat deposit.' });
+        // Tangkap error dari axios (misalnya network error, atau status HTTP non-2xx)
+        let errorMessage = 'Terjadi kesalahan koneksi atau internal saat membuat deposit.';
+        if (error.response && error.response.data && error.response.data.message) {
+             errorMessage = error.response.data.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        res.status(500).json({ success: false, message: errorMessage });
     }
 };
