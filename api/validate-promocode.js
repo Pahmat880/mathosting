@@ -26,7 +26,7 @@ async function connectToDatabase() {
 // Ini adalah copy dari packageSpecs di create-deposit.js.
 // Idealnya, data ini juga diambil dari DB agar tidak duplikasi.
 const packageSpecs = {
-    'bot-sentinel': { price: 35000 },
+    'bot-sentinel': { price: 500 },
     'bot-guardian': { price: 60000 },
     'bot-titan': { price: 80000 },
     'bot-colossus': { price: 100000 },
