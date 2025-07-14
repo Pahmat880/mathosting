@@ -1,4 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Custom Pop-up Functionality ---
+    const customPopup = document.getElementById('customPopup');
+    const popupIcon = document.getElementById('popupIcon');
+    const popupTitle = document.getElementById('popupTitle');
+    const popupMessage = document.getElementById('popupMessage');
+    const popupCloseBtn = document.getElementById('popupCloseBtn');
+
+    // Fungsi untuk menampilkan pop-up kustom
+    const showCustomPopup = (message, title = 'Notifikasi', iconClass = 'fas fa-info-circle', iconType = 'info', callback = null) => {
+        popupIcon.className = `popup-icon ${iconClass} ${iconType}`; // Set ikon dan tipe warna
+        popupTitle.textContent = title;
+        popupMessage.textContent = message;
+        customPopup.classList.add('show'); // Tampilkan overlay
+
+        // Tambahkan event listener untuk tombol OK/Close
+        const closeHandler = () => {
+            customPopup.classList.remove('show'); // Sembunyikan overlay
+            popupCloseBtn.removeEventListener('click', closeHandler); // Hapus listener agar tidak duplikat
+            // Untuk memastikan tidak ada multiple event listener pada overlay itself
+            customPopup.removeEventListener('click', overlayClickHandler); 
+
+            if (callback) {
+                callback(); // Panggil callback jika ada
+            }
+        };
+        
+        // Handler untuk klik di overlay (di luar konten pop-up)
+        const overlayClickHandler = (e) => {
+            if (e.target === customPopup) { 
+                closeHandler();
+            }
+        };
+
+        popupCloseBtn.addEventListener('click', closeHandler);
+        customPopup.addEventListener('click', overlayClickHandler);
+    };
+
     // --- Logic for index.html (Product Categories & Package Display) ---
     const categoryCards = document.querySelectorAll('.category-card');
     const botPackagesSection = document.getElementById('bot-packages');
@@ -20,7 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const category = card.dataset.category;
 
             if (card.classList.contains('coming-soon')) {
-                alert('Layanan ini akan segera tersedia! Mohon bersabar ya.');
+                // Mengganti alert() dengan pop-up kustom
+                showCustomPopup(
+                    'Layanan ini akan segera tersedia! Mohon bersabar ya.',
+                    'Coming Soon!',
+                    'fas fa-hourglass-half', // Icon jam pasir
+                    'info'
+                );
                 return;
             }
 
@@ -63,8 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedPackageData = JSON.parse(localStorage.getItem('selectedPackage'));
 
         if (!selectedPackageData) {
-            alert('Tidak ada paket yang dipilih. Anda akan dialihkan kembali ke halaman utama.');
-            window.location.href = 'index.html';
+            // Mengganti alert() dengan pop-up kustom
+            showCustomPopup(
+                'Tidak ada paket yang dipilih. Anda akan dialihkan kembali ke halaman utama.',
+                'Perhatian!',
+                'fas fa-exclamation-triangle', // Icon peringatan
+                'warning',
+                () => { window.location.href = 'index.html'; } // Callback untuk redirect setelah OK
+            );
             return;
         }
 
@@ -126,30 +175,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof snap !== 'undefined') {
                         snap.pay(result.snapToken, {
                             onSuccess: function(midtransResult){
-                                alert("Pembayaran berhasil!");
                                 window.location.href = `/success.html?order_id=${midtransResult.order_id}`;
                             },
                             onPending: function(midtransResult){
-                                alert("Pembayaran Anda dalam proses.");
-                                window.location.href = `/pending.html?order_id=${midtransResult.order_id}`;
+                                showCustomPopup(
+                                    'Pembayaran Anda dalam proses. Silakan selesaikan pembayaran melalui metode yang Anda pilih.',
+                                    'Pembayaran Tertunda',
+                                    'fas fa-hourglass-half', 
+                                    'warning',
+                                    () => { window.location.href = `/pending.html?order_id=${midtransResult.order_id}`; }
+                                );
                             },
                             onError: function(midtransResult){
-                                alert("Pembayaran gagal!");
-                                window.location.href = `/error.html?order_id=${midtransResult.order_id}`;
+                                showCustomPopup(
+                                    'Pembayaran gagal. Silakan coba metode pembayaran lain atau hubungi dukungan.',
+                                    'Pembayaran Gagal',
+                                    'fas fa-times-circle', 
+                                    'error',
+                                    () => { window.location.href = `/error.html?order_id=${midtransResult.order_id}`; }
+                                );
                             },
                             onClose: function(){
-                                alert('Anda menutup pop-up tanpa menyelesaikan pembayaran.');
+                                showCustomPopup(
+                                    'Anda menutup pop-up tanpa menyelesaikan pembayaran. Pesanan Anda belum diproses.',
+                                    'Pembayaran Dibatalkan',
+                                    'fas fa-info-circle', 
+                                    'info'
+                                );
                             }
                         });
                     } else {
-                        alert('Midtrans Snap.js tidak dimuat. Pastikan Anda menambahkan script di checkout.html.');
+                        showCustomPopup(
+                            'Midtrans Snap.js tidak dimuat. Pastikan Anda menambahkan script di checkout.html dengan Client Key yang benar.',
+                            'Error Konfigurasi',
+                            'fas fa-exclamation-circle', 
+                            'error'
+                        );
                     }
                 } else {
-                    alert('Terjadi kesalahan saat membuat order: ' + (result.message || 'Unknown error'));
+                    showCustomPopup(
+                        'Terjadi kesalahan saat membuat order: ' + (result.message || 'Unknown error'),
+                        'Order Gagal',
+                        'fas fa-times-circle', 
+                        'error'
+                    );
                 }
             } catch (error) {
                 console.error('Error during checkout:', error);
-                alert('Terjadi kesalahan koneksi. Silakan coba lagi.');
+                showCustomPopup(
+                    'Terjadi kesalahan koneksi. Silakan coba lagi. Detail: ' + error.message,
+                    'Koneksi Error',
+                    'fas fa-plug', 
+                    'error'
+                );
             }
         });
     }
@@ -188,46 +266,82 @@ document.addEventListener('DOMContentLoaded', () => {
                     serverDetailsDiv.style.display = 'block';
 
                     document.querySelectorAll('.copy-btn').forEach(button => {
-                        button.addEventListener('click', (e) => {
+                        button.addEventListener('click', async (e) => { 
                             const targetId = e.currentTarget.dataset.target;
                             const textToCopy = document.getElementById(targetId).textContent;
-                            navigator.clipboard.writeText(textToCopy).then(() => {
-                                alert('Berhasil disalin: ' + textToCopy);
-                            }).catch(err => {
+                            try {
+                                await navigator.clipboard.writeText(textToCopy);
+                                showCustomPopup(
+                                    `'${textToCopy}' berhasil disalin!`,
+                                    'Disalin!',
+                                    'fas fa-clipboard-check', 
+                                    'success'
+                                );
+                            } catch (err) {
                                 console.error('Gagal menyalin: ', err);
-                            });
+                                showCustomPopup(
+                                    'Gagal menyalin teks. Silakan salin secara manual.',
+                                    'Gagal Salin',
+                                    'fas fa-exclamation-circle', 
+                                    'error'
+                                );
+                            }
                         });
                     });
 
                     document.getElementById('btnRestartServer').addEventListener('click', () => {
-                        alert('Fitur Restart Server akan segera diaktifkan!');
-                        // TODO: Implementasi fetch ke backend API Anda untuk restart server
+                        showCustomPopup(
+                            'Fitur Restart Server akan segera diaktifkan! Mohon tunggu update selanjutnya.',
+                            'Fitur Coming Soon',
+                            'fas fa-hammer', 
+                            'info'
+                        );
                     });
                     document.getElementById('btnStopServer').addEventListener('click', () => {
-                        alert('Fitur Stop Server akan segera diaktifkan!');
-                        // TODO: Implementasi fetch ke backend API Anda untuk stop server
+                        showCustomPopup(
+                            'Fitur Stop Server akan segera diaktifkan! Mohon tunggu update selanjutnya.',
+                            'Fitur Coming Soon',
+                            'fas fa-hammer', 
+                            'info'
+                        );
                     });
 
 
-                } else if (response.ok && result.orderStatus === 'pending_payment') {
+                } else if (response.ok && (result.orderStatus === 'pending_payment' || result.orderStatus === 'paid' || result.orderStatus === 'challenge')) {
                     loadingMessageDiv.style.display = 'none';
                     errorMessageDiv.style.display = 'block';
-                    errorMessageDiv.querySelector('p').textContent = 'Pembayaran Anda masih dalam proses atau belum terkonfirmasi. Harap tunggu beberapa saat atau hubungi dukungan kami.';
-                    errorMessageDiv.querySelector('.btn').style.display = 'none';
+                    errorMessageDiv.querySelector('p').textContent = `Pembayaran Anda masih dalam status "${result.orderStatus.replace('_', ' ')}". Harap tunggu beberapa saat atau hubungi dukungan kami.`;
+                    errorMessageDiv.querySelector('.btn').style.display = 'block'; 
                 }
                 else {
                     loadingMessageDiv.style.display = 'none';
                     errorMessageDiv.style.display = 'block';
+                    errorMessageDiv.querySelector('p').textContent = `Maaf, detail server tidak tersedia atau pesanan belum aktif. Status: ${result.orderStatus || 'Unknown'}. Mohon tunggu atau hubungi dukungan.`;
                     console.error('Gagal memuat detail server:', result.message || 'Server data not found or not active.');
                 }
             } catch (error) {
                 console.error('Error fetching server details:', error);
                 loadingMessageDiv.style.display = 'none';
                 errorMessageDiv.style.display = 'block';
+                errorMessageDiv.querySelector('p').textContent = 'Terjadi kesalahan koneksi saat memuat detail server. Silakan coba lagi.';
             }
         };
 
-        // Berikan delay singkat jika Anda tahu server butuh waktu untuk dibuat
-        setTimeout(fetchServerDetails, 5000); // Coba ambil detail setelah 5 detik
+        // Lakukan polling untuk detail server setiap beberapa detik
+        const pollingInterval = setInterval(async () => {
+            const response = await fetch(`/api/get-server-details?order_id=${orderId}`);
+            const result = await response.json();
+            if (result.orderStatus === 'active' && result.server) {
+                clearInterval(pollingInterval); 
+                fetchServerDetails(); 
+            } else {
+                console.log(`Polling: Server for order ${orderId} status is ${result.orderStatus || 'unknown'}. Retrying...`);
+                loadingMessageDiv.querySelector('i').className = 'fa-solid fa-spinner fa-spin';
+                loadingMessageDiv.querySelector('i').style.color = 'var(--accent-color)';
+                loadingMessageDiv.querySelector('p').textContent = `Memuat detail server (${result.orderStatus ? result.orderStatus.replace(/_/g, ' ') : 'unknown'})...`;
+            }
+        }, 5000); 
+
+        fetchServerDetails(); 
     }
 });
