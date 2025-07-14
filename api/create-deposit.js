@@ -35,7 +35,7 @@ async function connectToDatabase() {
 
 // Data spesifikasi paket (TETAP SAMA)
 const packageSpecs = {
-    'bot-sentinel': { memory: 2048, cpu: 100, disk: 10240, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 500 },
+    'bot-sentinel': { memory: 2048, cpu: 100, disk: 10240, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 35000 },
     'bot-guardian': { memory: 4096, cpu: 200, disk: 20480, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 60000 },
     'bot-titan': { memory: 6144, cpu: 300, disk: 30720, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 80000 },
     'bot-colossus': { memory: 8192, cpu: 400, disk: 40960, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 100000 },
