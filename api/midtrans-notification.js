@@ -42,7 +42,6 @@ if (!PTERO_PANEL_DOMAIN) {
 }
 
 // --- Kunci API Pterodactyl (dari ENV Anda sendiri) ---
-// Ini adalah kunci yang Anda ambil dari Pterodactyl Panel Anda.
 const PTERO_API_KEY_PTLA = process.env.PTERO_API_KEY_PTLA;
 const PTERO_API_KEY_PTLC = process.env.PTERO_API_KEY_PTLC;
 
@@ -56,10 +55,7 @@ async function connectToDatabase() {
     if (cachedDb) {
         return cachedDb;
     }
-    const client = await MongoClient.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
+    const client = await MongoClient.connect(MONGODB_URI); // Perbaikan: Menghapus opsi deprecated
     const db = client.db(DB_NAME);
     cachedDb = db;
     return db;
@@ -151,9 +147,9 @@ module.exports = async (req, res) => {
                         eggid: specs.egg_id,
                         nestid: specs.nest_id,
                         loc: specs.loc,
-                        domain: PTERO_PANEL_DOMAIN, // Ambil dari ENV Anda sendiri
-                        ptla: PTERO_API_KEY_PTLA, // Kunci PTLA dari Pterodactyl Panel Anda
-                        ptlc: PTERO_API_KEY_PTLC  // Kunci PTLC dari Pterodactyl Panel Anda
+                        domain: PTERO_PANEL_DOMAIN,
+                        ptla: PTERO_API_KEY_PTLA,
+                        ptlc: PTERO_API_KEY_PTLC
                     };
 
                     let queryStringParts = [];

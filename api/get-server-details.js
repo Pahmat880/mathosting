@@ -17,10 +17,7 @@ async function connectToDatabase() {
     if (cachedDb) {
         return cachedDb;
     }
-    const client = await MongoClient.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
+    const client = await MongoClient.connect(MONGODB_URI); // Perbaikan: Menghapus opsi deprecated
     const db = client.db(DB_NAME);
     cachedDb = db;
     return db;
@@ -48,7 +45,6 @@ module.exports = async (req, res) => {
         }
 
         if (order.status === 'active' && order.serverDetails) {
-            // Berikan detail server ke frontend
             res.status(200).json({
                 orderStatus: order.status,
                 server: {
@@ -60,7 +56,7 @@ module.exports = async (req, res) => {
                     port: order.serverDetails.port
                 }
             });
-        } else if (order.status === 'pending_payment' || order.status === 'paid' || order.status === 'challenge') { // Tambah status 'challenge'
+        } else if (order.status === 'pending_payment' || order.status === 'paid' || order.status === 'challenge') {
             res.status(200).json({
                 orderStatus: order.status,
                 message: 'Server creation is pending or in progress. Please wait.'

@@ -38,10 +38,7 @@ async function connectToDatabase() {
     if (cachedDb) {
         return cachedDb;
     }
-    const client = await MongoClient.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
+    const client = await MongoClient.connect(MONGODB_URI); // Perbaikan: Menghapus opsi deprecated
     const db = client.db(DB_NAME);
     cachedDb = db;
     return db;
@@ -55,7 +52,6 @@ const packageSpecs = {
     'bot-colossus': { memory: 8192, cpu: 400, disk: 40960, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 100000 },
     'bot-infinity': { memory: 0, cpu: 0, disk: 51200, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 150000 }
 };
-// CATATAN PENTING: `egg_id`, `nest_id`, dan `startup` command HARUS DISESUAIKAN dengan konfigurasi Pterodactyl Anda!
 
 // Ini adalah handler untuk Serverless Function
 module.exports = async (req, res) => {
@@ -63,11 +59,11 @@ module.exports = async (req, res) => {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { username, phoneNumber, packageId, packageName, packagePrice, duration, paymentMethod, totalPrice } = req.body;
+    const { username, phoneNumber, packageId, packageName, packagePrice, duration, totalPrice } = req.body;
 
     // 1. Validasi Input
-    if (!username || !packageId || !duration || !paymentMethod || !totalPrice) {
-        return res.status(400).json({ message: 'Semua kolom wajib diisi (Username, Paket, Durasi, Metode Pembayaran).' });
+    if (!username || !packageId || !duration || !totalPrice) { // paymentMethod tidak wajib divalidasi disini, karena bisa kosong
+        return res.status(400).json({ message: 'Semua kolom wajib diisi (Username, Paket, Durasi, Total Pembayaran).' });
     }
 
     // Validasi harga di backend
@@ -97,9 +93,6 @@ module.exports = async (req, res) => {
 
 
     try {
-        // Cari atau buat customer di DB kita (untuk melacak pelanggan)
-        // Perhatikan: Penggunaan `username` sebagai identifikasi unik mungkin perlu ditinjau jika `username` bisa duplikat.
-        // Jika `username` bisa duplikat, pertimbangkan untuk menambahkan `email` (jika diambil dari user) atau ID unik lainnya.
         let customer = await customersCollection.findOne({ username: username });
         if (!customer) {
             customer = {
@@ -111,7 +104,6 @@ module.exports = async (req, res) => {
             customer._id = result.insertedId;
             console.log(`New customer created in DB: ${username}`);
         } else {
-            // Update nomor telepon jika ada
             if (phoneNumber && customer.phoneNumber !== phoneNumber) {
                 await customersCollection.updateOne(
                     { _id: customer._id },
@@ -123,7 +115,6 @@ module.exports = async (req, res) => {
 
         const orderId = `AMAT-${Date.now()}`;
 
-        // Simpan data order ke database
         const orderData = {
             orderId: orderId,
             customerId: customer._id,
@@ -134,16 +125,15 @@ module.exports = async (req, res) => {
             packagePrice: selectedPackage.price,
             duration: duration,
             totalPrice: finalPriceCalc,
-            paymentMethod: paymentMethod,
+            paymentMethod: req.body.paymentMethod || null, // Ambil dari body, mungkin kosong
             status: 'pending', // Status awal
             createdAt: new Date(),
             updatedAt: new Date(),
-            serverDetails: null // Akan diisi setelah server dibuat
+            serverDetails: null
         };
         await ordersCollection.insertOne(orderData);
         console.log(`Order ${orderId} saved to MongoDB. Status: pending`);
 
-        // 2. Siapkan Parameter Transaksi untuk Midtrans Snap
         const transactionDetails = {
             order_id: orderId,
             gross_amount: finalPriceCalc,
@@ -151,7 +141,7 @@ module.exports = async (req, res) => {
 
         const customerDetails = {
             first_name: username,
-            email: `${username}@amat-hosting.com`, // Email dummy atau Anda bisa minta email opsional
+            email: `${username}@amat-hosting.com`,
             phone: phoneNumber || '081234567890',
         };
 
@@ -174,7 +164,7 @@ module.exports = async (req, res) => {
                 pending: `${YOUR_DOMAIN}/pending.html?order_id=${orderId}`
             },
             credit_card: { secure: true },
-            enabled_payments: [paymentMethod],
+            enabled_payments: [req.body.paymentMethod || 'gopay'], // Default ke gopay jika kosong, atau sesuaikan
             custom_field1: packageId
         };
 
