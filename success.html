@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembayaran Berhasil - Amat Hosting</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fa-solid fa-server" style="color: var(--accent-color);"></i>
+                <span>Amat Hosting</span>
+            </div>
+            <nav>
+                </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="success-section">
+            <div class="success-card">
+                <i class="fa-solid fa-circle-check success-icon"></i>
+                <h2>Pembayaran Berhasil!</h2>
+                <p>Terima kasih telah melakukan pemesanan di Amat Hosting. Server Anda sedang diproses dan detailnya akan segera ditampilkan di bawah.</p>
+                <div id="loadingMessage" class="loading-message">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat detail server...
+                </div>
+                <div id="serverDetails" class="server-details" style="display: none;">
+                    <h3>Detail Server Anda:</h3>
+                    <div class="detail-item">
+                        <span>Nama Server:</span>
+                        <p id="detailServerName"></p>
+                        <button class="copy-btn" data-target="detailServerName"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>Username Panel:</span>
+                        <p id="detailUsername"></p>
+                        <button class="copy-btn" data-target="detailUsername"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>Password Panel:</span>
+                        <p id="detailPassword"></p>
+                        <button class="copy-btn" data-target="detailPassword"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>URL Panel:</span>
+                        <p id="detailPanelUrl"></p>
+                        <button class="copy-btn" data-target="detailPanelUrl"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>Alamat IP:</span>
+                        <p id="detailIpAddress"></p>
+                        <button class="copy-btn" data-target="detailIpAddress"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="detail-item">
+                        <span>Port Server:</span>
+                        <p id="detailPort"></p>
+                        <button class="copy-btn" data-target="detailPort"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="server-actions">
+                        <a id="btnAccessPanel" href="#" target="_blank" class="btn btn-primary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Akses Panel</a>
+                        <button id="btnRestartServer" class="btn btn-secondary"><i class="fa-solid fa-rotate"></i> Restart Server</button>
+                        <button id="btnStopServer" class="btn btn-danger"><i class="fa-solid fa-stop"></i> Stop Server</button>
+                    </div>
+                </div>
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <i class="fa-solid fa-circle-exclamation error-icon"></i>
+                    <p>Maaf, terjadi kesalahan saat memuat detail server atau server belum siap. Mohon tunggu beberapa saat atau hubungi dukungan kami dengan Order ID: <span id="errorOrderId"></span></p>
+                    <button class="btn btn-primary" onclick="location.reload()"><i class="fa-solid fa-sync-alt"></i> Coba Lagi</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-col">
+                <h4>Amat Hosting</h4>
+                <p>Amat Hosting menyediakan hosting Pterodactyl dengan kualitas terbaik, didukung oleh performa optimal, uptime tinggi, dan layanan support responsif.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Layanan</h4>
+                <ul>
+                    <li><a href="#">Bot Hosting</a></li>
+                    <li><a href="#">Minecraft Hosting</a></li>
+                    <li><a href="#">Web Hosting</a></li>
+                    <li><a href="#">VPS Hosting</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Perusahaan</h4>
+                <ul>
+                    <li><li><a href="#">Tentang Kami</a></li>
+                    <li><a href="#">Kontak</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Bantuan</h4>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Dokumentasi</a></li>
+                    <li><a href="#">Komunitas</a></li>
+                    <li><a href="#">Status Server</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 Amat Hosting. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

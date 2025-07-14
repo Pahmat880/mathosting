@@ -1,0 +1,193 @@
+// api/create-order.js
+
+const Midtrans = require('midtrans-client');
+const { MongoClient } = require('mongodb');
+const bcrypt = require('bcrypt');
+
+// --- Konfigurasi Umum & Lingkungan ---
+const YOUR_DOMAIN = process.env.YOUR_DOMAIN || 'http://localhost:3000';
+const IS_MIDTRANS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// --- Konfigurasi Midtrans ---
+const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY;
+const MIDTRANS_CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY;
+
+// --- Konfigurasi MongoDB ---
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = process.env.DB_NAME || 'amat_hosting_db';
+
+// Validasi kunci & URI
+if (!MIDTRANS_SERVER_KEY || !MIDTRANS_CLIENT_KEY) {
+    console.error("Midtrans API keys are not set. Please check your environment variables.");
+}
+if (!MONGODB_URI) {
+    console.error("MongoDB URI is not set. Please check your environment variables.");
+}
+
+// Inisialisasi Midtrans Snap API client
+const snap = new Midtrans.Snap({
+    isProduction: IS_MIDTRANS_PRODUCTION,
+    serverKey: MIDTRANS_SERVER_KEY,
+    clientKey: MIDTRANS_CLIENT_KEY
+});
+
+// Cache koneksi MongoDB untuk Serverless Functions
+let cachedDb = null;
+
+async function connectToDatabase() {
+    if (cachedDb) {
+        return cachedDb;
+    }
+    const client = await MongoClient.connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    });
+    const db = client.db(DB_NAME);
+    cachedDb = db;
+    return db;
+}
+
+// Data spesifikasi paket (loc diisi dengan nilai 1)
+const packageSpecs = {
+    'bot-sentinel': { memory: 2048, cpu: 100, disk: 10240, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 35000 },
+    'bot-guardian': { memory: 4096, cpu: 200, disk: 20480, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 60000 },
+    'bot-titan': { memory: 6144, cpu: 300, disk: 30720, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 80000 },
+    'bot-colossus': { memory: 8192, cpu: 400, disk: 40960, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 100000 },
+    'bot-infinity': { memory: 0, cpu: 0, disk: 51200, allocations: 1, databases: 0, egg_id: '5', nest_id: '1', loc: '1', startup: 'node index.js', price: 150000 }
+};
+// CATATAN PENTING: `egg_id`, `nest_id`, dan `startup` command HARUS DISESUAIKAN dengan konfigurasi Pterodactyl Anda!
+
+// Ini adalah handler untuk Serverless Function
+module.exports = async (req, res) => {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method Not Allowed' });
+    }
+
+    const { username, phoneNumber, packageId, packageName, packagePrice, duration, paymentMethod, totalPrice } = req.body;
+
+    // 1. Validasi Input
+    if (!username || !packageId || !duration || !paymentMethod || !totalPrice) {
+        return res.status(400).json({ message: 'Semua kolom wajib diisi (Username, Paket, Durasi, Metode Pembayaran).' });
+    }
+
+    // Validasi harga di backend
+    const selectedPackage = packageSpecs[packageId];
+    if (!selectedPackage) {
+        return res.status(400).json({ message: 'Paket tidak valid.' });
+    }
+
+    let discountPercentage = 0;
+    if (duration === 3) discountPercentage = 0.05;
+    else if (duration === 6) discountPercentage = 0.10;
+    else if (duration === 12) discountPercentage = 0.15;
+
+    const rawTotalPriceCalc = selectedPackage.price * duration;
+    const discountAmountCalc = rawTotalPriceCalc * discountPercentage;
+    const finalPriceCalc = rawTotalPriceCalc - discountAmountCalc;
+
+    // Toleransi 1 Rupiah untuk floating point comparison
+    if (Math.abs(finalPriceCalc - totalPrice) > 1) {
+        console.warn(`Harga tidak cocok. Dari Frontend: ${totalPrice}, Hitung Backend: ${finalPriceCalc}`);
+        return res.status(400).json({ message: 'Harga tidak valid. Silakan coba lagi.' });
+    }
+
+    const db = await connectToDatabase();
+    const ordersCollection = db.collection('orders');
+    const customersCollection = db.collection('customers');
+
+
+    try {
+        // Cari atau buat customer di DB kita (untuk melacak pelanggan)
+        let customer = await customersCollection.findOne({ username: username });
+        if (!customer) {
+            customer = {
+                username: username,
+                phoneNumber: phoneNumber || null,
+                createdAt: new Date(),
+            };
+            const result = await customersCollection.insertOne(customer);
+            customer._id = result.insertedId;
+            console.log(`New customer created in DB: ${username}`);
+        } else {
+            // Update nomor telepon jika ada
+            if (phoneNumber && customer.phoneNumber !== phoneNumber) {
+                await customersCollection.updateOne(
+                    { _id: customer._id },
+                    { $set: { phoneNumber: phoneNumber, updatedAt: new Date() } }
+                );
+            }
+            console.log(`Existing customer found in DB: ${username}`);
+        }
+
+        const orderId = `AMAT-${Date.now()}`;
+
+        // Simpan data order ke database
+        const orderData = {
+            orderId: orderId,
+            customerId: customer._id,
+            username: username,
+            phoneNumber: phoneNumber || null,
+            packageId: packageId,
+            packageName: packageName,
+            packagePrice: selectedPackage.price,
+            duration: duration,
+            totalPrice: finalPriceCalc,
+            paymentMethod: paymentMethod,
+            status: 'pending',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            serverDetails: null
+        };
+        await ordersCollection.insertOne(orderData);
+        console.log(`Order ${orderId} saved to MongoDB. Status: pending`);
+
+        // 2. Siapkan Parameter Transaksi untuk Midtrans Snap
+        const transactionDetails = {
+            order_id: orderId,
+            gross_amount: finalPriceCalc,
+        };
+
+        const customerDetails = {
+            first_name: username,
+            email: `${username}@amat-hosting.com`,
+            phone: phoneNumber || '081234567890',
+        };
+
+        const itemDetails = [{
+            id: packageId,
+            name: `${packageName} (${duration} Bulan)`,
+            price: finalPriceCalc,
+            quantity: 1,
+            category: "Hosting Service",
+            merchant_name: "Amat Hosting"
+        }];
+
+        const transactionOptions = {
+            transaction_details: transactionDetails,
+            customer_details: customerDetails,
+            item_details: itemDetails,
+            callbacks: {
+                finish: `${YOUR_DOMAIN}/success.html?order_id=${orderId}`,
+                error: `${YOUR_DOMAIN}/error.html?order_id=${orderId}`,
+                pending: `${YOUR_DOMAIN}/pending.html?order_id=${orderId}`
+            },
+            credit_card: { secure: true },
+            enabled_payments: [paymentMethod],
+            custom_field1: packageId
+        };
+
+        const snapTransaction = await snap.createTransaction(transactionOptions);
+
+        res.status(200).json({
+            message: 'Order berhasil dibuat, lanjutkan ke pembayaran.',
+            snapToken: snapTransaction.token
+        });
+
+    } catch (error) {
+        console.error('Error in create-order API:', error);
+        if (error.response && error.response.data) {
+            console.error('Midtrans API Error Response:', error.response.data);
+        }
+        res.status(500).json({ message: 'Terjadi kesalahan internal. Silakan coba lagi.' });
+    }
+};
